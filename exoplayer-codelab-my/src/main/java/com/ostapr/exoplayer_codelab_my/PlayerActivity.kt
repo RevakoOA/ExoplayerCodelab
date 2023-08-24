@@ -34,6 +34,9 @@ import com.example.exoplayer.databinding.ActivityPlayerBinding
 class PlayerActivity : AppCompatActivity() {
 
     private var player: ExoPlayer? = null
+    private var playWhenReady = true
+    private var mediaItemIndex = 0
+    private var playbackPosition = 0L
 
     private val viewBinding by lazy(LazyThreadSafetyMode.NONE) {
         ActivityPlayerBinding.inflate(layoutInflater)
@@ -94,16 +97,25 @@ class PlayerActivity : AppCompatActivity() {
             .build()
             .also { exoPlayer -> viewBinding.videoView.player = exoPlayer }
 
-        populatePlayerWithSampleMusic()
+        player?.let(::restorePlayerState)
     }
 
-    private fun populatePlayerWithSampleMusic() {
+    private fun restorePlayerState(player: ExoPlayer) {
         val mediaItem = MediaItem.fromUri(getString(R.string.media_url_mp3))
-        player?.setMediaItem(mediaItem)
+
+        player.setMediaItems(listOf(mediaItem), mediaItemIndex, playbackPosition)
+        player.playWhenReady = playWhenReady
+        player.prepare()
     }
 
     private fun releasePlayer() {
-        player?.release()
+        player?.let { exoPlayer ->
+            playbackPosition = exoPlayer.currentPosition
+            mediaItemIndex = exoPlayer.currentMediaItemIndex
+            playWhenReady = exoPlayer.playWhenReady
+
+            exoPlayer.release()
+        }
         player = null
     }
 }
