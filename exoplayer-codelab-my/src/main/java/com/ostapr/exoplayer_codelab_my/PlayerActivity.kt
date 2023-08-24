@@ -22,6 +22,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
@@ -88,14 +89,22 @@ class PlayerActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, viewBinding.videoView).let { controller ->
             controller.hide(WindowInsetsCompat.Type.systemBars())
-            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 
     private fun initializePlayer() {
         player = ExoPlayer.Builder(this)
             .build()
-            .also { exoPlayer -> viewBinding.videoView.player = exoPlayer }
+            .also { exoPlayer ->
+                viewBinding.videoView.player = exoPlayer
+
+                exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                    .buildUpon()
+                    .setMaxVideoSizeSd()
+                    .build()
+            }
 
         player?.let(::restorePlayerState)
     }
@@ -103,8 +112,16 @@ class PlayerActivity : AppCompatActivity() {
     private fun restorePlayerState(player: ExoPlayer) {
         val audioItem = MediaItem.fromUri(getString(R.string.media_url_mp3))
         val videoItem = MediaItem.fromUri(getString(R.string.media_url_mp4))
+        val dashVideoItem = MediaItem.Builder()
+            .setUri(getString(R.string.media_url_dash))
+            .setMimeType(MimeTypes.APPLICATION_MPD)
+            .build()
 
-        player.setMediaItems(listOf(audioItem, videoItem), mediaItemIndex, playbackPosition)
+        player.setMediaItems(
+            listOf(audioItem, videoItem, dashVideoItem),
+            mediaItemIndex,
+            playbackPosition
+        )
         player.playWhenReady = playWhenReady
         player.prepare()
     }
