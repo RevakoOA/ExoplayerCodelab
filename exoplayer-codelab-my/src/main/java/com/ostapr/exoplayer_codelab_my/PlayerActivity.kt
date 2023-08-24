@@ -16,6 +16,7 @@
 package com.ostapr.exoplayer_codelab_my
 
 import android.os.Bundle
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
@@ -23,11 +24,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import com.example.exoplayer.R
 import com.example.exoplayer.databinding.ActivityPlayerBinding
+import com.ostapr.exoplayer_codelab_my.PlayerActivity.Companion.TAG
 
 /**
  * A fullscreen activity to play audio or video streams.
@@ -38,6 +42,8 @@ class PlayerActivity : AppCompatActivity() {
     private var playWhenReady = true
     private var mediaItemIndex = 0
     private var playbackPosition = 0L
+    private val playerListener = playbackStateListener()
+    private val analyticsListener = analyticsListener()
 
     private val viewBinding by lazy(LazyThreadSafetyMode.NONE) {
         ActivityPlayerBinding.inflate(layoutInflater)
@@ -123,6 +129,8 @@ class PlayerActivity : AppCompatActivity() {
             playbackPosition
         )
         player.playWhenReady = playWhenReady
+        player.addListener(playerListener)
+        player.addAnalyticsListener(analyticsListener)
         player.prepare()
     }
 
@@ -132,8 +140,54 @@ class PlayerActivity : AppCompatActivity() {
             mediaItemIndex = exoPlayer.currentMediaItemIndex
             playWhenReady = exoPlayer.playWhenReady
 
+            exoPlayer.removeListener(playerListener)
             exoPlayer.release()
         }
         player = null
+    }
+
+    companion object {
+        const val TAG = "PlayerActivity"
+    }
+}
+
+@OptIn(UnstableApi::class)
+private fun analyticsListener() = object : AnalyticsListener {
+    override fun onRenderedFirstFrame(
+        eventTime: AnalyticsListener.EventTime,
+        output: Any,
+        renderTimeMs: Long
+    ) {
+        Log.d(TAG, "ExoPlayer - First frame in $renderTimeMs")
+    }
+
+    override fun onDroppedVideoFrames(
+        eventTime: AnalyticsListener.EventTime,
+        droppedFrames: Int,
+        elapsedMs: Long
+    ) {
+        Log.w(TAG, "ExoPlayer - Dropped video frames for $elapsedMs")
+    }
+
+    override fun onAudioUnderrun(
+        eventTime: AnalyticsListener.EventTime,
+        bufferSize: Int,
+        bufferSizeMs: Long,
+        elapsedSinceLastFeedMs: Long
+    ) {
+        Log.w(TAG, "ExoPlayer - Audio underrun is nore noticeable then video frames drop for $elapsedSinceLastFeedMs")
+    }
+}
+
+private fun playbackStateListener() = object : Player.Listener {
+    override fun onPlaybackStateChanged(playbackState: Int) {
+        val stateString: String = when (playbackState) {
+            ExoPlayer.STATE_IDLE -> "ExoPlayer.STATE_IDLE      -"
+            ExoPlayer.STATE_BUFFERING -> "ExoPlayer.STATE_BUFFERING -"
+            ExoPlayer.STATE_READY -> "ExoPlayer.STATE_READY     -"
+            ExoPlayer.STATE_ENDED -> "ExoPlayer.STATE_ENDED     -"
+            else -> "UNKNOWN_STATE             -"
+        }
+        Log.d(TAG, "changed state to $stateString")
     }
 }
