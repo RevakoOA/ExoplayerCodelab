@@ -101,9 +101,10 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun restorePlayerState(player: ExoPlayer) {
-        val mediaItem = MediaItem.fromUri(getString(R.string.media_url_mp3))
+        val audioItem = MediaItem.fromUri(getString(R.string.media_url_mp3))
+        val videoItem = MediaItem.fromUri(getString(R.string.media_url_mp4))
 
-        player.setMediaItems(listOf(mediaItem), mediaItemIndex, playbackPosition)
+        player.setMediaItems(listOf(audioItem, videoItem), mediaItemIndex, playbackPosition)
         player.playWhenReady = playWhenReady
         player.prepare()
     }
