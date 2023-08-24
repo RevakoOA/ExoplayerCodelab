@@ -1,0 +1,19 @@
+*.iml
+.idea
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+
+# Project exclude paths
+/app/
+/exoplayer-codelab-00/
+/exoplayer-codelab-01/
+/exoplayer-codelab-02/
+/exoplayer-codelab-03/
+/exoplayer-codelab-04/
+/gradle/
